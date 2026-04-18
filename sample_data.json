@@ -1,0 +1,298 @@
+{
+  "case_id": "DFIR-2024-0042",
+  "hostname": "FINANCE-WS04",
+  "os": "Windows 10 Pro 22H2",
+  "analyst_notes": "Reported by user: machine suddenly encrypted files, ransom note appeared. Investigate chain of events.",
+
+  "events": [
+    {
+      "timestamp": "2024-01-15T08:12:34Z",
+      "type": "email_attachment_open",
+      "path": "C:\\Users\\mjones\\Downloads\\Q4_Invoice_2023.docm",
+      "user": "mjones",
+      "process": "WINWORD.EXE"
+    },
+    {
+      "timestamp": "2024-01-15T08:13:02Z",
+      "type": "macro_execution",
+      "path": "C:\\Users\\mjones\\Downloads\\Q4_Invoice_2023.docm",
+      "user": "mjones",
+      "process": "WINWORD.EXE",
+      "details": "Macro 'AutoOpen' executed"
+    },
+    {
+      "timestamp": "2024-01-15T08:13:05Z",
+      "type": "file_creation",
+      "path": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe",
+      "user": "mjones",
+      "process": "WINWORD.EXE",
+      "hash": "a3f9c12b8e4d7f0163e5a2b9d8c4f7e0"
+    },
+    {
+      "timestamp": "2024-01-15T08:13:07Z",
+      "type": "process_execution",
+      "path": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe",
+      "user": "mjones",
+      "process": "cmd.exe",
+      "cmdline": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe --install --silent"
+    },
+    {
+      "timestamp": "2024-01-15T08:13:45Z",
+      "type": "network_connection",
+      "destination_ip": "185.220.101.47",
+      "destination_port": 443,
+      "protocol": "HTTPS",
+      "bytes_sent": 1842,
+      "bytes_recv": 48200,
+      "process": "svchost32.exe"
+    },
+    {
+      "timestamp": "2024-01-15T08:14:22Z",
+      "type": "registry_write",
+      "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\SystemUpdate",
+      "value": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe --persist",
+      "user": "mjones"
+    },
+    {
+      "timestamp": "2024-01-15T08:16:11Z",
+      "type": "file_access",
+      "path": "C:\\Users\\mjones\\Documents\\finance_reports\\",
+      "user": "mjones",
+      "process": "svchost32.exe",
+      "operation": "enumerate"
+    },
+    {
+      "timestamp": "2024-01-15T08:18:33Z",
+      "type": "network_connection",
+      "destination_ip": "185.220.101.47",
+      "destination_port": 443,
+      "protocol": "HTTPS",
+      "bytes_sent": 52480000,
+      "bytes_recv": 204,
+      "process": "svchost32.exe",
+      "note": "Large outbound transfer - possible exfiltration"
+    },
+    {
+      "timestamp": "2024-01-15T08:21:05Z",
+      "type": "file_modification",
+      "path": "C:\\Users\\mjones\\Documents\\finance_reports\\Q4_Report.xlsx",
+      "user": "mjones",
+      "process": "svchost32.exe",
+      "operation": "encrypt",
+      "new_extension": ".locked"
+    },
+    {
+      "timestamp": "2024-01-15T08:21:06Z",
+      "type": "file_modification",
+      "path": "C:\\Users\\mjones\\Documents\\finance_reports\\payroll_2023.xlsx",
+      "user": "mjones",
+      "process": "svchost32.exe",
+      "operation": "encrypt",
+      "new_extension": ".locked"
+    },
+    {
+      "timestamp": "2024-01-15T08:21:44Z",
+      "type": "file_creation",
+      "path": "C:\\Users\\mjones\\Documents\\finance_reports\\README_DECRYPT.txt",
+      "user": "mjones",
+      "process": "svchost32.exe",
+      "note": "Ransom note dropped"
+    },
+    {
+      "timestamp": "2024-01-15T08:22:01Z",
+      "type": "shadow_copy_deletion",
+      "path": "vssadmin delete shadows /all /quiet",
+      "user": "mjones",
+      "process": "cmd.exe",
+      "note": "Anti-forensic: VSS deletion"
+    }
+  ],
+
+  "processes": [
+    {
+      "pid": 6712,
+      "name": "WINWORD.EXE",
+      "parent_pid": 4320,
+      "parent_name": "explorer.exe",
+      "user": "mjones",
+      "path": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+      "cmdline": "\"C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\" /n \"C:\\Users\\mjones\\Downloads\\Q4_Invoice_2023.docm\"",
+      "start_time": "2024-01-15T08:12:30Z",
+      "end_time": null,
+      "memory_mb": 284,
+      "suspicious": false
+    },
+    {
+      "pid": 7834,
+      "name": "cmd.exe",
+      "parent_pid": 6712,
+      "parent_name": "WINWORD.EXE",
+      "user": "mjones",
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "cmdline": "cmd.exe /c C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe --install --silent",
+      "start_time": "2024-01-15T08:13:04Z",
+      "end_time": "2024-01-15T08:13:09Z",
+      "memory_mb": 4,
+      "suspicious": true,
+      "anomaly": "WINWORD.EXE spawning cmd.exe is unusual"
+    },
+    {
+      "pid": 9021,
+      "name": "svchost32.exe",
+      "parent_pid": 7834,
+      "parent_name": "cmd.exe",
+      "user": "mjones",
+      "path": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe",
+      "cmdline": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe --install --silent",
+      "start_time": "2024-01-15T08:13:07Z",
+      "end_time": null,
+      "memory_mb": 42,
+      "suspicious": true,
+      "anomalies": [
+        "Running from user TEMP directory (not System32)",
+        "Name mimics legitimate svchost.exe",
+        "No digital signature",
+        "Makes outbound HTTPS connections",
+        "Performing mass file operations"
+      ]
+    },
+    {
+      "pid": 10234,
+      "name": "cmd.exe",
+      "parent_pid": 9021,
+      "parent_name": "svchost32.exe",
+      "user": "mjones",
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "cmdline": "cmd.exe /c vssadmin delete shadows /all /quiet",
+      "start_time": "2024-01-15T08:22:00Z",
+      "end_time": "2024-01-15T08:22:03Z",
+      "memory_mb": 4,
+      "suspicious": true,
+      "anomaly": "Anti-forensic VSS deletion command"
+    }
+  ],
+
+  "logs": [
+    {
+      "timestamp": "2024-01-15T08:12:30Z",
+      "event_id": 4688,
+      "source": "Security",
+      "description": "A new process has been created",
+      "user": "FINANCE-WS04\\mjones",
+      "details": {
+        "new_process": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+        "creator_process": "C:\\Windows\\explorer.exe"
+      }
+    },
+    {
+      "timestamp": "2024-01-15T08:13:04Z",
+      "event_id": 4688,
+      "source": "Security",
+      "description": "A new process has been created",
+      "user": "FINANCE-WS04\\mjones",
+      "details": {
+        "new_process": "C:\\Windows\\System32\\cmd.exe",
+        "creator_process": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+        "command_line": "cmd.exe /c C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe --install --silent"
+      },
+      "flag": "HIGH_RISK"
+    },
+    {
+      "timestamp": "2024-01-15T08:13:07Z",
+      "event_id": 4688,
+      "source": "Security",
+      "description": "A new process has been created",
+      "user": "FINANCE-WS04\\mjones",
+      "details": {
+        "new_process": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe",
+        "creator_process": "C:\\Windows\\System32\\cmd.exe",
+        "token_elevation": "TokenElevationTypeLimited"
+      },
+      "flag": "HIGH_RISK"
+    },
+    {
+      "timestamp": "2024-01-15T08:14:22Z",
+      "event_id": 13,
+      "source": "Microsoft-Windows-Sysmon",
+      "description": "Registry value set",
+      "user": "FINANCE-WS04\\mjones",
+      "details": {
+        "target_object": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\SystemUpdate",
+        "details": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe --persist"
+      },
+      "flag": "PERSISTENCE"
+    },
+    {
+      "timestamp": "2024-01-15T08:22:00Z",
+      "event_id": 4688,
+      "source": "Security",
+      "description": "A new process has been created",
+      "user": "FINANCE-WS04\\mjones",
+      "details": {
+        "new_process": "C:\\Windows\\System32\\cmd.exe",
+        "creator_process": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe",
+        "command_line": "cmd.exe /c vssadmin delete shadows /all /quiet"
+      },
+      "flag": "ANTI_FORENSIC"
+    },
+    {
+      "timestamp": "2024-01-15T08:22:01Z",
+      "event_id": 7045,
+      "source": "System",
+      "description": "A service was installed in the system",
+      "details": {
+        "service_name": "SystemUpdateSvc",
+        "service_file": "C:\\Users\\mjones\\AppData\\Local\\Temp\\svchost32.exe"
+      },
+      "flag": "PERSISTENCE"
+    },
+    {
+      "timestamp": "2024-01-15T08:22:05Z",
+      "event_id": 1102,
+      "source": "Security",
+      "description": "The audit log was cleared",
+      "user": "FINANCE-WS04\\mjones",
+      "flag": "ANTI_FORENSIC"
+    }
+  ],
+
+  "network_connections": [
+    {
+      "timestamp": "2024-01-15T08:13:45Z",
+      "src_ip": "192.168.1.104",
+      "src_port": 52341,
+      "dst_ip": "185.220.101.47",
+      "dst_port": 443,
+      "protocol": "TCP",
+      "state": "ESTABLISHED",
+      "process_pid": 9021,
+      "process_name": "svchost32.exe",
+      "bytes_sent": 1842,
+      "bytes_recv": 48200,
+      "geo": {"country": "Netherlands", "asn": "Tor Exit Node"}
+    },
+    {
+      "timestamp": "2024-01-15T08:18:33Z",
+      "src_ip": "192.168.1.104",
+      "src_port": 52355,
+      "dst_ip": "185.220.101.47",
+      "dst_port": 443,
+      "protocol": "TCP",
+      "state": "CLOSE_WAIT",
+      "process_pid": 9021,
+      "process_name": "svchost32.exe",
+      "bytes_sent": 52480000,
+      "bytes_recv": 204,
+      "geo": {"country": "Netherlands", "asn": "Tor Exit Node"}
+    }
+  ],
+
+  "file_hash_results": {
+    "a3f9c12b8e4d7f0163e5a2b9d8c4f7e0": {
+      "virustotal_detections": "54/72",
+      "family": "LockBit",
+      "first_seen": "2024-01-10T00:00:00Z",
+      "classification": "Ransomware.Win32.LockBit"
+    }
+  }
+}
