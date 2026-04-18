@@ -1,12 +1,12 @@
 # Self-Correcting DFIR Agent
 
-A LangGraph-based Digital Forensics & Incident Response (DFIR) agent that performs autonomous, iterative digital forensic analysis with built-in self-correction capability.
+A LangGraph-based Digital Forensics & Incident Response (DFIR) agent that performs autonomous, iterative digital forensic analysis with built-in self-correction capability. Powered by Grok.
 
 ## Overview
 
 This system implements a multi-agent framework using LangGraph that automates DFIR analysis through a sophisticated workflow:
 
-1. **Triage Agent** — Runs forensic tools (timeline analysis, process examination, log parsing) and synthesizes findings using Claude
+1. **Triage Agent** — Runs forensic tools (timeline analysis, process examination, log parsing) and synthesizes findings using Grok
 2. **Critic Agent** — Adversarially reviews findings for gaps, weaknesses, and contradictions
 3. **Planner Agent** — Decides whether to continue analysis or finalize, directing focus for next iteration
 4. **Report Generator** — Compiles final analysis into a structured, auditable report
@@ -45,7 +45,7 @@ This system implements a multi-agent framework using LangGraph that automates DF
 ### Prerequisites
 
 - Python 3.9+
-- Anthropic API key (for Claude access)
+- Grok API key (from https://console.x.ai)
 
 ### Installation
 
@@ -68,7 +68,7 @@ This system implements a multi-agent framework using LangGraph that automates DF
 
 4. Set up your API key:
    ```bash
-   export ANTHROPIC_API_KEY="your-api-key-here"  # Or set via environment
+   export GROK_API_KEY="your-api-key-here"  # Or set via environment
    ```
 
 ## Usage
@@ -81,7 +81,7 @@ streamlit run app.py
 
 The app will open at `http://localhost:8501` and provide:
 - Case file upload or built-in sample data
-- Configurable max iterations and API settings
+- Configurable max iterations and Grok API settings
 - Live step-by-step execution display
 - Final dashboard with findings, confidence metrics, and audit log
 
@@ -105,7 +105,7 @@ The app will open at `http://localhost:8501` and provide:
 ```
 START
   ↓
-[Triage] → Runs tools, extracts findings from Claude
+[Triage] → Runs tools, extracts findings from Grok
   ↓
 [Critic] → Reviews for gaps and contradictions
   ↓
@@ -136,7 +136,7 @@ Final flag assignment:
 ### Environment Variables
 
 ```bash
-ANTHROPIC_API_KEY    # Required: Anthropic API key
+GROK_API_KEY    # Required: Grok API key from https://console.x.ai
 ```
 
 ### Parameters
@@ -159,7 +159,7 @@ Export log as JSON from the final report for downstream analysis.
 ## Dependencies
 
 - **langgraph** ≥ 0.2.0 — Graph-based agent orchestration
-- **anthropic** ≥ 0.40.0 — Claude API access
+- **openai** ≥ 1.0.0 — Grok API access (OpenAI-compatible)
 - **streamlit** ≥ 1.40.0 — Web interface
 - **pandas** ≥ 2.0.0 — Data visualization
 - **python-dotenv** ≥ 1.0.0 — Environment configuration

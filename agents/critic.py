@@ -14,7 +14,7 @@ would never improve.
 
 import json
 
-import anthropic
+from openai import OpenAI
 
 from utils.logger import dfir_logger
 
@@ -73,7 +73,7 @@ def run_critic(state: dict) -> dict:
     """
     LangGraph node: Critic Agent.
 
-    Reviews the current triage findings and tool results, calls Claude
+    Reviews the current triage findings and tool results, calls Grok
     to identify weaknesses, and returns an updated state with critic feedback.
     """
     iteration       = state.get("iteration", 1)
@@ -98,14 +98,16 @@ def run_critic(state: dict) -> dict:
     )
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+        client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+        response = client.chat.completions.create(
+            model="grok-3",
             max_tokens=2000,
-            system=CRITIC_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
+            messages=[
+                {"role": "system", "content": CRITIC_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message}
+            ],
         )
-        raw_text = response.content[0].text.strip()
+        raw_text = response.choices[0].message.content.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.split("```")[1]
             if raw_text.startswith("json"):
@@ -113,14 +115,14 @@ def run_critic(state: dict) -> dict:
         critic_output = json.loads(raw_text)
     except json.JSONDecodeError as e:
         dfir_logger.error(
-            f"JSON parse error from critic Claude: {e}",
+            f"JSON parse error from critic Grok: {e}",
             agent="critic",
             iteration=iteration,
         )
         critic_output = _fallback_critic(findings, tool_results, forensic_data)
     except Exception as e:
         dfir_logger.error(
-            f"Critic API call failed: {e}",
+            f"Grok API call failed: {e}",
             agent="critic",
             iteration=iteration,
         )

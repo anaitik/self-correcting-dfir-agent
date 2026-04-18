@@ -13,7 +13,7 @@ The planner is the strategic brain of the self-correction loop.
 
 import json
 
-import anthropic
+from openai import OpenAI
 
 from utils.logger import dfir_logger
 
@@ -106,14 +106,16 @@ def run_planner(state: dict) -> dict:
     )
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+        client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+        response = client.chat.completions.create(
+            model="grok-3",
             max_tokens=1500,
-            system=PLANNER_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
+            messages=[
+                {"role": "system", "content": PLANNER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message}
+            ],
         )
-        raw_text = response.content[0].text.strip()
+        raw_text = response.choices[0].message.content.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.split("```")[1]
             if raw_text.startswith("json"):
@@ -121,14 +123,14 @@ def run_planner(state: dict) -> dict:
         planner_output = json.loads(raw_text)
     except json.JSONDecodeError as e:
         dfir_logger.error(
-            f"JSON parse error from planner Claude: {e}",
+            f"JSON parse error from planner Grok: {e}",
             agent="planner",
             iteration=iteration,
         )
         planner_output = _fallback_planner(critic_feedback, tool_results, forensic_data, force_finalize)
     except Exception as e:
         dfir_logger.error(
-            f"Planner API call failed: {e}",
+            f"Grok API call failed: {e}",
             agent="planner",
             iteration=iteration,
         )

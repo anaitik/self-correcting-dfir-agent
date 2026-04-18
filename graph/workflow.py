@@ -29,7 +29,7 @@ from utils.scoring  import score_overall_analysis
 class DFIRState(TypedDict, total=False):
     # ── Input ─────────────────────────────────────────────────────── #
     forensic_data:    dict          # Raw forensic evidence package
-    api_key:          str           # Anthropic API key
+    api_key:          str           # Grok API key
     case_id:          str           # Human-readable case identifier
 
     # ── Iteration control ─────────────────────────────────────────── #

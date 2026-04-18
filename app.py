@@ -88,12 +88,12 @@ with st.sidebar:
     st.markdown("## ⚙️ Configuration")
 
     # API key
-    api_key_env = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key_env = os.environ.get("GROK_API_KEY", "")
     api_key = st.text_input(
-        "Anthropic API Key",
+        "Grok API Key",
         value=api_key_env,
         type="password",
-        help="Set ANTHROPIC_API_KEY env var or paste here",
+        help="Set GROK_API_KEY env var or paste here",
     )
 
     st.divider()
@@ -138,7 +138,7 @@ with st.sidebar:
 st.markdown('<div class="main-header">🔍 Self-Correcting DFIR Agent</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="sub-header">Autonomous Digital Forensics & Incident Response '
-    '| Powered by LangGraph + Claude</div>',
+    '| Powered by LangGraph + Grok</div>',
     unsafe_allow_html=True,
 )
 
@@ -205,7 +205,7 @@ run_clicked = run_col.button(
 )
 
 if not api_key:
-    st.warning("⚠️  Please enter your Anthropic API key in the sidebar.")
+    st.warning("⚠️  Please enter your Grok API key in the sidebar.")
 
 if run_clicked and forensic_data and api_key:
     # Reset previous run

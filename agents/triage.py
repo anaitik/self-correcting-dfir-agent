@@ -5,7 +5,7 @@ Triage Agent — performs the initial (and subsequent) forensic analysis.
 On each pass it:
   1. Decides which tools to run (guided by the planner on iteration > 1)
   2. Runs those tools against the forensic data
-  3. Sends ALL tool outputs to Claude for structured finding extraction
+  3. Sends ALL tool outputs to Grok for structured finding extraction
   4. Persists findings + tool results to shared LangGraph state
 
 The agent explicitly does NOT assume facts without evidence; confidence
@@ -15,7 +15,7 @@ scores reflect how many independent sources corroborate each finding.
 import json
 from typing import Any
 
-import anthropic
+from openai import OpenAI
 
 from tools.timeline  import get_timeline
 from tools.processes import analyze_processes
@@ -78,7 +78,7 @@ def run_triage(state: dict) -> dict:
     """
     LangGraph node: Triage Agent.
 
-    Reads the shared state, runs the appropriate tools, calls Claude
+    Reads the shared state, runs the appropriate tools, calls Grok
     to synthesise findings, and returns an updated state dict.
     """
     iteration     = state.get("iteration", 1)
@@ -147,7 +147,7 @@ def run_triage(state: dict) -> dict:
         )
 
     # ---------------------------------------------------------------- #
-    #  Step 2: Ask Claude to synthesise findings                        #
+    #  Step 2: Ask Grok to synthesise findings                        #
     # ---------------------------------------------------------------- #
     user_message = _build_user_message(
         forensic_data=forensic_data,
@@ -158,14 +158,16 @@ def run_triage(state: dict) -> dict:
     )
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+        client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+        response = client.chat.completions.create(
+            model="grok-3",
             max_tokens=2000,
-            system=TRIAGE_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
+            messages=[
+                {"role": "system", "content": TRIAGE_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message}
+            ],
         )
-        raw_text = response.content[0].text.strip()
+        raw_text = response.choices[0].message.content.strip()
         # Strip any accidental markdown fences
         if raw_text.startswith("```"):
             raw_text = raw_text.split("```")[1]
@@ -174,14 +176,14 @@ def run_triage(state: dict) -> dict:
         triage_output = json.loads(raw_text)
     except json.JSONDecodeError as e:
         dfir_logger.error(
-            f"JSON parse error from Claude: {e}",
+            f"JSON parse error from Grok: {e}",
             agent="triage",
             iteration=iteration,
         )
         triage_output = _fallback_output(tool_results)
     except Exception as e:
         dfir_logger.error(
-            f"API call failed: {e}",
+            f"Grok API call failed: {e}",
             agent="triage",
             iteration=iteration,
         )
@@ -253,7 +255,7 @@ def _build_user_message(
     previous_findings: list,
     focus_areas: list,
 ) -> str:
-    """Construct the Claude user message with all available context."""
+    """Construct the Grok user message with all available context."""
     case_id  = forensic_data.get("case_id", "UNKNOWN")
     hostname = forensic_data.get("hostname", "UNKNOWN")
     notes    = forensic_data.get("analyst_notes", "")
@@ -308,7 +310,7 @@ def _summarise_tool(result: dict) -> dict:
 
 
 def _fallback_output(tool_results: dict) -> dict:
-    """Minimal fallback if Claude API fails — derived purely from tool outputs."""
+    """Minimal fallback if Grok API fails — derived purely from tool outputs."""
     findings = []
     for tool, result in tool_results.items():
         if tool == "analyze_processes":
@@ -326,6 +328,6 @@ def _fallback_output(tool_results: dict) -> dict:
     return {
         "findings": findings,
         "tools_used": list(tool_results.keys()),
-        "missing_analysis": ["Claude API unavailable — manual review required"],
-        "analyst_summary": "Automated analysis degraded — Claude API call failed.",
+        "missing_analysis": ["Grok API unavailable — manual review required"],
+        "analyst_summary": "Automated analysis degraded — Grok API call failed.",
     }
